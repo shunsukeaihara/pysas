@@ -14,7 +14,7 @@ signal, samplingrate, bitrate = waveread("path/to/monoral/wave/file")
 bitrate = 16
 world = World(samplingrate, bitrate)
 
-f0, spectrogram, aperiodicity = world.analyze(pcm)
+f0, spectrogram, aperiodicity = world.analyze(signal)
 ```
 
 signal, f0 are 1d numpy.ndarray. spectrogram, aperiodicity  are same shape 2d numpy.ndarray.
