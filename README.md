@@ -2,8 +2,7 @@
 
 Python(2.X, 3.X) wrapper for World Speech Analysis and Synthesis System.
 
-This module is based on [World](http://ml.cs.yamanashi.ac.jp/world/english/index.html) C++ library by M. Morise.
-The  version of bundled World C++ library is 0.2.0_3.
+This module is based on [World](http://ml.cs.yamanashi.ac.jp/world/english/index.html) C++ library(v0.2.0_3) by M. Morise.
 
 ## usage
 
