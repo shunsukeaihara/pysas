@@ -34,10 +34,10 @@ def waveread(path):
 
     
     if bits == 8:
-        signals = np.float64(np.fromstring(raw, dtype=np.uint8) - 127) / 127.0
+        signal = np.float64(np.fromstring(raw, dtype=np.uint8) - 127) / 127.0
     elif bits == 16:
-        signals = np.float64(np.fromstring(raw, dtype=np.int16)) / 32767.0
-    return signals, fs, bits
+        signal = np.float64(np.fromstring(raw, dtype=np.int16)) / 32767.0
+    return signal, fs, bits
 
 
 cdef double **malloc_matrix(int size, int dims):
@@ -62,8 +62,7 @@ cdef class World:
     cdef int samplingrate, bitrate, fft_size, envelope_size
     cdef double freamperiod
     
-    def __init__(self, np.ndarray[np.float64_t, ndim=1, mode="c"] signal,
-                 int samplingrate, int bitrate, double freamperiod=0.5):
+    def __init__(self, int samplingrate, int bitrate, double freamperiod=0.5):
 
         self.freamperiod = freamperiod
         self.samplingrate = samplingrate
