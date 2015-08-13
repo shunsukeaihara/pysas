@@ -59,14 +59,13 @@ cdef class World:
     """
     """
 
-    cdef int samplingrate, bitrate, fft_size, envelope_size
+    cdef int samplingrate, fft_size, envelope_size
     cdef double freamperiod
     
-    def __init__(self, int samplingrate, int bitrate, double freamperiod=0.5):
+    def __init__(self, int samplingrate, double freamperiod=0.5):
 
         self.freamperiod = freamperiod
         self.samplingrate = samplingrate
-        self.bitrate = bitrate
         self.fft_size = cheaptrick.GetFFTSizeForCheapTrick(self.samplingrate)
         self.envelope_size = self.fft_size / 2 + 1
 
