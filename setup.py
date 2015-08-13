@@ -5,7 +5,7 @@ from Cython.Distutils import build_ext
 import sys
 import numpy as np
 from glob import glob
-sys.path.append('./src')
+#sys.path.append('./src')
 
 
 ext_modules = [Extension(
@@ -17,7 +17,7 @@ ext_modules = [Extension(
 
 setup(
     name="pyworld",
-    description='Python wrapper for World(Speech Analysis and Synthesis System)',
+    description='Python wrapper for World Speech Analysis and Synthesis System.',
     version="0.01",
     long_description=open('README.md').read(),
     ext_modules=ext_modules,
