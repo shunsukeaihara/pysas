@@ -48,7 +48,7 @@ cdef double **malloc_matrix(int size, int dims):
     return mat
 
 
-cdef void free_matrix(double ** mat, int size):
+cdef void free_matrix(double **mat, int size):
     cdef int i
     for i in range(size):
         free(mat[i])
@@ -108,7 +108,7 @@ cdef class World:
         if ratio <= 0:
             return spectrogram
         cdef int dim = spectrogram.shape[1]
-        assert dim = self.envelope_size, "dimension of spectrogram should be same as self.envelope_size"
+        assert dim == self.envelope_size, "dimension of spectrogram should be same as self.envelope_size"
         cdef double *freq_axis1 = <double *>malloc(dim * sizeof(double))
         cdef double *freq_axis2 = <double *>malloc(dim * sizeof(double))
         cdef double *spectrum1 = <double *>malloc(dim * sizeof(double))
@@ -188,7 +188,7 @@ cdef class World:
                             f0_length, <double *> refined_f0.data)
         return refined_f0, time_axis
     
-    cdef double ** estimate_spectral_envelope(self,
+    cdef double **estimate_spectral_envelope(self,
             np.ndarray[np.float64_t, ndim=1, mode="c"] signal,
             np.ndarray[np.float64_t, ndim=1, mode="c"] f0,
             np.ndarray[np.float64_t, ndim=1, mode="c"] time_axis):
@@ -200,7 +200,7 @@ cdef class World:
                               f0.size, spectrogram)
         return spectrogram
 
-    cdef double ** estimate_aperiodicity(self,
+    cdef double **estimate_aperiodicity(self,
             np.ndarray[np.float64_t, ndim=1, mode="c"] signal,
             np.ndarray[np.float64_t, ndim=1, mode="c"] f0,
             np.ndarray[np.float64_t, ndim=1, mode="c"] time_axis):
