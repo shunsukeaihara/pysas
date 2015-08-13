@@ -1,0 +1,2 @@
+recursive-include lib *.cpp *.h
+recursive-include src *.pyx *.pxd
