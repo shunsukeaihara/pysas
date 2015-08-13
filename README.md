@@ -34,8 +34,6 @@ outsignal = world.syntesis(f0, spectrogram, aperiodicity)
 outsignal is 1d numpy.ndarray normalized between [-1,1].
 
 
-## LICENCE
-
-License
+## LICENSE
 
 Wrapper code is licensed under MIT License. Bundled World C++ library is New BSD license.
