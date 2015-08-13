@@ -3,6 +3,7 @@
 Python(2.X, 3.X) wrapper for World Speech Analysis and Synthesis System.
 
 This module is based on [World](http://ml.cs.yamanashi.ac.jp/world/english/index.html) C++ library by M. Morise.
+The  version of bundled World C++ library is 0.2.0_3.
 
 ## usage
 
@@ -36,4 +37,4 @@ outsignal is 1d numpy.ndarray normalized between [-1,1].
 
 ## LICENSE
 
-Wrapper code is licensed under MIT License. Bundled World C++ library is New BSD license.
+Wrapper code is licensed under MIT License. Bundled World C++ library is licensed under New BSD license.
