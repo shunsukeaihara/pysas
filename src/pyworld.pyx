@@ -107,26 +107,28 @@ cdef class World:
                             double ratio):
         if ratio <= 0:
             return spectrogram
-        cdef double *freq_axis1 = <double *>malloc(self.fft_size * sizeof(double))
-        cdef double *freq_axis2 = <double *>malloc(self.fft_size * sizeof(double))
-        cdef double *spectrum1 = <double *>malloc(self.fft_size * sizeof(double))
-        cdef double *spectrum2 = <double *>malloc(self.fft_size * sizeof(double))
+        cdef int dim = spectrogram.shape[1]
+        assert dim = self.envelope_size, "dimension of spectrogram should be same as self.envelope_size"
+        cdef double *freq_axis1 = <double *>malloc(dim * sizeof(double))
+        cdef double *freq_axis2 = <double *>malloc(dim * sizeof(double))
+        cdef double *spectrum1 = <double *>malloc(dim * sizeof(double))
+        cdef double *spectrum2 = <double *>malloc(dim * sizeof(double))
 
         cdef int i, j, k
         k = <int>(self.fft_size / 2.0 * ratio)
-        for i in range(self.fft_size / 2 + 1):
-            freq_axis1[i] = ratio * i /self.fft_size * self.sampling_rate
-            freq_axis2[i] = <double>i / self.fft_size * self.sampling_rate
+        for i in range(dim):
+            freq_axis1[i] = ratio * i /self.fft_size * self.samplingrate
+            freq_axis2[i] = <double>i / self.fft_size * self.samplingrate
 
         for i in range(spectrogram.size):
-            for j in range(self.fft_size / 2 + 1):
+            for j in range(dim):
                 spectrum1[j] = log(spectrogram[i, j])
-            matlabfunctions.interp1(freq_axis1, spectrum1, self.fft_size / 2 + 1,
-                                    freq_axis2, self.fft_size / 2 + 1, spectrum2);
-            for j in range(self.fft_size / 2 + 1):
+            matlabfunctions.interp1(freq_axis1, spectrum1, dim,
+                                    freq_axis2, dim, spectrum2);
+            for j in range(dim):
                 spectrogram[i, j] = exp(spectrum2[j])
             if (ratio < 1.0 and k > 0):
-                for j in range(k, self.fft_size / 2 + 1):
+                for j in range(k, dim):
                     spectrogram[i, j] = spectrogram[i, k - 1]
         return spectrogram
 
@@ -140,7 +142,7 @@ cdef class World:
         cdef double **c_spectrogram = malloc_matrix(spectrogram.shape[0], spectrogram.shape[1])
         cdef double **c_aperiodicity = malloc_matrix(aperiodicity.shape[0], aperiodicity.shape[1])
 
-        cdef int result_length = <int>((f0.size - 1) * self.frameperiod / 1000.0 * self.sampling_rate) + 1
+        cdef int result_length = <int>((f0.size - 1) * self.frameperiod / 1000.0 * self.samplingrate) + 1
         cdef np.ndarray[np.float64_t, ndim=1, mode="c"] result = np.zeros(result_length, dtype=np.float64)
 
         cdef int i, j
