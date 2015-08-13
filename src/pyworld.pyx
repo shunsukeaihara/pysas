@@ -5,11 +5,13 @@ import numpy as np
 cimport numpy as np
 cimport cython
 from libc.stdlib cimport malloc, free
+from libc.math cimport log, exp
 
 cimport dio
 cimport d4c
 cimport stonemask
 cimport cheaptrick
+cimport matlabfunctions
 
 import wave
 
@@ -71,6 +73,9 @@ cdef class World:
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def analyze(self, np.ndarray[np.float64_t, ndim=1, mode="c"] signal):
+        """
+        @return f0, spectrogram, aperiodicity
+        """
         f0, time_axis = self.estimate_f0(signal)
         cdef double **c_spectrogram
         cdef double **c_aperiodicity
@@ -88,16 +93,43 @@ cdef class World:
                 spectrogram[i, j] = c_spectrogram[i][j]
                 aperiodicity[i, j] = c_aperiodicity[i][j]
         free_matrix(c_spectrogram, f0.size)
+        free_matrix(c_spectrogram, f0.size)
         return f0, spectrogram, aperiodicity
 
+    def f0_scaling(self, np.ndarray[np.float64_t, ndim=1, mode="c"] f0, double shift):
+        if shift <= 0:
+            return f0
+        return f0 * shift
+    
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    def synthesis(self,
-                 np.ndarray[np.float64_t, ndim=1, mode="c"] f0,
-                 np.ndarray[np.float64_t, ndim=2, mode="c"] spectrogram,
-                 np.ndarray[np.float64_t, ndim=2, mode="c"] aperiodicity):
-        pass
-        
+    def spectral_stretching(self, np.ndarray[np.float64_t, ndim=2, mode="c"] spectrogram,
+                            double ratio):
+        if ratio <= 0:
+            return spectrogram
+        cdef double *freq_axis1 = <double *>malloc(self.fft_size * sizeof(double))
+        cdef double *freq_axis2 = <double *>malloc(self.fft_size * sizeof(double))
+        cdef double *spectrum1 = <double *>malloc(self.fft_size * sizeof(double))
+        cdef double *spectrum2 = <double *>malloc(self.fft_size * sizeof(double))
+
+        cdef int i, j, k
+        k = <int>(self.fft_size / 2.0 * ratio)
+        for i in range(self.fft_size / 2 + 1):
+            freq_axis1[i] = ratio * i /self.fft_size * self.sampling_rate
+            freq_axis2[i] = <double>i / self.fft_size * self.sampling_rate
+
+        for i in range(spectrogram.size):
+            for j in range(self.fft_size / 2 + 1):
+                spectrum1[j] = log(spectrogram[i, j])
+            matlabfunctions.interp1(freq_axis1, spectrum1, self.fft_size / 2 + 1,
+                                    freq_axis2, self.fft_size / 2 + 1, spectrum2);
+            for j in range(self.fft_size / 2 + 1):
+                spectrogram[i, j] = exp(spectrum2[j])
+            if (ratio < 1.0 and k > 0):
+                for j in range(k, self.fft_size / 2 + 1):
+                    spectrogram[i, j] = spectrogram[i, k - 1]
+        return spectrogram
+    
     cdef estimate_f0(self, np.ndarray[np.float64_t, ndim=1, mode="c"] signal):
         """
         estimate F0 from speech signal
