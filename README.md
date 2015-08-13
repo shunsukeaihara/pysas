@@ -11,7 +11,6 @@ This module is based on [World](http://ml.cs.yamanashi.ac.jp/world/english/index
 ```python
 from pyworld import World, waveread
 signal, samplingrate, bitrate = waveread("path/to/monoral/wave/file")
-bitrate = 16
 world = World(samplingrate, bitrate)
 
 f0, spectrogram, aperiodicity = world.analyze(signal)
