@@ -1,15 +1,15 @@
-# pyworld
+# pysas
 
-Python(2.X, 3.X) wrapper for World Speech Analysis and Synthesis System.
+Speech Analysis and Synthesis for Python(2.X, 3.X).
 
-This module is based on [World](http://ml.cs.yamanashi.ac.jp/world/english/index.html) C++ library by M. Morise.
+This module include [World](http://ml.cs.yamanashi.ac.jp/world/english/index.html) C++ library by M. Morise.
 
-## usage
+# usage
 
-### analyze
+## analyzing by world
 
 ```python
-from pyworld import World, waveread
+from pysas import World, waveread
 signal, samplingrate, bitrate = waveread("path/to/monoral/wave/file")
 world = World(samplingrate, bitrate)
 

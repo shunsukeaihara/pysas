@@ -1,2 +1,2 @@
 recursive-include lib *.cpp *.h *.txt
-recursive-include src *.pyx *.pxd
+recursive-include pyworld *.pyx *.pxd *.py

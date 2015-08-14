@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # distutils: language = c++
-# distutils: sources = pyworld.cpp
+# distutils: sources = world.cpp
 import numpy as np
 cimport numpy as np
 cimport cython
