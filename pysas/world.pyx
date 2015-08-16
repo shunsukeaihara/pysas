@@ -40,7 +40,7 @@ def waveread(path):
     return signal, fs, bits
 
 
-cdef double **malloc_matrix(int size, int dims):
+cdef double **malloc_matrix(int size, int dims) nogil:
     cdef int i
     cdef double **mat = <double **>malloc(size * sizeof(double *))
     for i in range(size):
@@ -48,7 +48,7 @@ cdef double **malloc_matrix(int size, int dims):
     return mat
 
 
-cdef void free_matrix(double **mat, int size):
+cdef void free_matrix(double **mat, int size) nogil:
     cdef int i
     for i in range(size):
         free(mat[i])

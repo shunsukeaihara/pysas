@@ -12,12 +12,14 @@ ext_modules = [Extension(
         'pysas.world',
         ["pysas/world.pyx"] + glob("lib/world/*.cpp"),
         include_dirs=['lib/world', np.get_include()],
+        extra_compile_args=["-O3"],
         language="c++",
     ),
     Extension(
         'pysas.mcep',
         ["pysas/mcep.pyx"],
         include_dirs=[np.get_include()],
+        extra_compile_args=["-O3"],
         language="c++",
     )]
     
