@@ -60,13 +60,14 @@ def to_spectrum(np.ndarray[np.float64_t, ndim=1, mode="c"] mcep, double alpha, i
     cdef int fsize = fftsize >> 1
     cdef np.ndarray[np.float64_t, ndim=1, mode="c"] c = np.zeros(fsize + 1, dtype=np.float64)
     cdef np.ndarray[np.float64_t, ndim=1, mode="c"] prev = np.zeros_like(c)
-    freqt(<double *>mcep.data, <double *>c.data, <double *>prev.data, mcep.size, -alpha, fftsize>>1)
+    freqt(<double *>mcep.data, <double *>c.data, <double *>prev.data, mcep.size, -alpha, fsize)
     c[0] *= 2.0
-    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] ret = c.copy().resize(fftsize)
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] ret = c.copy()
+    ret.resize(fftsize, refcheck=False)
+    ret = ret
     cdef int i
     for i in range(fsize):
         ret[fftsize - i - 1] = ret[i+1]
-    
     return np.exp(np.real(np.fft.rfft(ret)))
 
 
@@ -84,7 +85,7 @@ def to_spectrum_from_matrix(np.ndarray[np.float64_t, ndim=2, mode="c"] mcepmat, 
         c_vec = c[i]
         mcep_vec = mcepmat[i]
         ret_vec = ret[i]
-        freqt(<double *>mcep_vec.data, <double *>c_vec.data, <double *>prev.data, mcep_vec.size, -alpha, fftsize>>1)
+        freqt(<double *>mcep_vec.data, <double *>c_vec.data, <double *>prev.data, mcep_vec.size, -alpha, fsize)
         c_vec[0] *= 2.0
         np.copyto(ret_vec[:fsize + 1], c_vec)
         for i in range(fsize):
@@ -94,15 +95,15 @@ def to_spectrum_from_matrix(np.ndarray[np.float64_t, ndim=2, mode="c"] mcepmat, 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void freqt(const double *c, double *wc, double *prev, int c_size, double alpha, int order) nogil:
+cdef void freqt(const double *c, double *wc, double *prev, int c_size, double alpha, int order):
     cdef int i, j
     for i in range(-(c_size - 1), 1):  # -(c_size - 1) 〜 0
-        memcpy(prev, wc, sizeof(double)*(c_size + 1))
+        memcpy(prev, wc, sizeof(double)*(order + 1))
         if order >= 0:
             wc[0] = c[-i] + alpha * prev[0]
         if order >= 1:
             wc[1] = (1.0 - alpha ** 2) * prev[0] + alpha * prev[1]
-        for j in range(2, order):  # 2 ~ order -> length(wc) -> order + 1
+        for j in range(2, order + 1):  # 2 ~ order -> length(wc) -> order + 1
             wc[j] = prev[j - 1] + alpha * (prev[j] - wc[j - 1])
 
 

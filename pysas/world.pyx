@@ -25,8 +25,8 @@ def waveread(path):
     channels = wf.getnchannels()
     assert channels == 1, "wave file should be monoral"
     
-    bits = wf.getsampwidth()  # bit rate
-    assert bits==8 or bits==16, "bit rate should be 8 or 16bits"
+    bits = wf.getsampwidth() * 8  # bit rate
+    assert bits==8 or bits==16, "bit rate should be 8 or 16bits (input {}bit)".format(bits)
     
     fs = wf.getframerate()  # sampling rate(Hz)
     datalength = wf.getnframes()
@@ -60,15 +60,21 @@ cdef class World:
     """
 
     cdef int samplingrate, fft_size, envelope_size
-    cdef double freamperiod
+    cdef double frameperiod
     
-    def __init__(self, int samplingrate, double freamperiod=0.5):
+    def __init__(self, int samplingrate, double frameperiod=0.5):
 
-        self.freamperiod = freamperiod
+        self.frameperiod = frameperiod
         self.samplingrate = samplingrate
         self.fft_size = cheaptrick.GetFFTSizeForCheapTrick(self.samplingrate)
         self.envelope_size = self.fft_size / 2 + 1
 
+    def fftsize(self):
+        return self.fft_size
+
+    def envelopesize(self):
+        return self.envelope_size
+    
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def analyze(self, np.ndarray[np.float64_t, ndim=1, mode="c"] signal):
@@ -165,7 +171,7 @@ cdef class World:
         @signal speech signal
         @return estimated f0 series
         """
-        f0_length = dio.GetSamplesForDIO(self.samplingrate, signal.size, self.freamperiod)
+        f0_length = dio.GetSamplesForDIO(self.samplingrate, signal.size, self.frameperiod)
         cdef np.ndarray[np.float64_t, ndim=1, mode="c"] f0, refined_f0, time_axis
         f0 = np.zeros(f0_length, dtype=np.float64)
         refined_f0 = np.zeros(f0_length, dtype=np.float64)
