@@ -80,6 +80,7 @@ def to_spectrum_from_matrix(np.ndarray[np.float64_t, ndim=2, mode="c"] mcepmat, 
     cdef int i
     cdef np.ndarray[np.float64_t, ndim=1, mode="c"] c_vec, mcep_vec, ret_vec
     for i in range(mcepmat.shape[0]):
+        # ToDo: change ndarray to typed memoryview
         c_vec = c[i]
         mcep_vec = mcepmat[i]
         ret_vec = ret[i]
@@ -123,7 +124,7 @@ def estimate_alpha(int sampfreq, double start=0, double end=1.0, double step=0.0
         dist = rms_distance_like(melscale_vector, warping_vector, size)
         if dist < min_dist:
             min_dist = dist
-            bset_alpha = a
+            best_alpha = a
     free(melscale_vector)
     free(warping_vector)
     return best_alpha
@@ -153,7 +154,9 @@ cdef void calc_warping_vector(double *vec, double alpha, int size) nogil:
         if warpfreq < 0:
             warpfreq += M_PI
         vec[i] = warpfreq
-
+    cdef double last = vec[size - 1]
+    for i in range(size):
+        vec[i] /= last
 
 cdef double rms_distance_like(double *a, double *b, int size) nogil:
     cdef int i
