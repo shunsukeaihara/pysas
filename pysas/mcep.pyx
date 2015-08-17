@@ -14,7 +14,7 @@ from libc.float cimport DBL_MAX
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def mcep_from_matrix(np.ndarray[np.float64_t, ndim=1, mode="c"] spmat, int order, double alpha):
+def to_mcep_from_matrix(np.ndarray[np.float64_t, ndim=1, mode="c"] spmat, int order, double alpha):
     """
     calucurate mel-cepstrum from spectrogram matrix
     """
@@ -23,19 +23,20 @@ def mcep_from_matrix(np.ndarray[np.float64_t, ndim=1, mode="c"] spmat, int order
     cdef np.ndarray[np.float64_t, ndim=2, mode="c"] c_mat = np.real(np.fft.irfft(logspmat, fftsize))
 
     cdef np.ndarray[np.float64_t, ndim=2, mode="c"] wc_mat = np.zeros(
-        (c_mat.shape[0], c_mat.shape[1] + 1),dtype=np.double)
+        (c_mat.shape[0], order + 1),dtype=np.double)
     
     cdef int i
     cdef np.ndarray[np.float64_t, ndim=1, mode="c"] c_vec, wc_vec, prev
     prev = np.zeros(wc_mat.shape[1], dtype=np.float64)
     for i in range(c_mat.shape[0]):
-        # todo: using memoryview or remove ndarray access to nogil
+        # ToDo: change ndarray to typed memoryview
         wc_vec = wc_mat[i]
         c_vec = c_mat[i]
         c_vec[1] /= 2.0
         freqt(<double *>c_vec.data, <double *>wc_vec.data, <double *>prev.data, c_vec.size, alpha, order)
         prev = 0
     return wc_mat
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -46,16 +47,48 @@ def to_mcep(np.ndarray[np.float64_t, ndim=1, mode="c"] sp, int order, double alp
     cdef int fftsize = (sp.size - 1) * 2
     cdef np.ndarray[np.float64_t, ndim=1, mode="c"] logsp = np.log(sp)
     cdef np.ndarray[np.float64_t, ndim=1, mode="c"] c = np.real(np.fft.irfft(logsp, fftsize))
-    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] wc = np.zeros(c.size + 1, dtype=np.float64)
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] wc = np.zeros(order + 1, dtype=np.float64)
     cdef np.ndarray[np.float64_t, ndim=1, mode="c"] prev = np.zeros_like(wc)
-    c[1] /= 2.0
+    c[0] /= 2.0
     freqt(<double *>c.data, <double *>wc.data, <double *>prev.data, c.size, alpha, order)
     return wc
 
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def to_spectl(np.ndarray[np.float64_t, ndim=1, mode="c"] mcep):
-    pass
+def to_spectrum(np.ndarray[np.float64_t, ndim=1, mode="c"] mcep, double alpha, int fftsize):
+    cdef int fsize = fftsize >> 1
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] c = np.zeros(fsize + 1, dtype=np.float64)
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] prev = np.zeros_like(c)
+    freqt(<double *>mcep.data, <double *>c.data, <double *>prev.data, mcep.size, -alpha, fftsize>>1)
+    c[0] *= 2.0
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] ret = c.copy().resize(fftsize)
+    cdef int i
+    for i in range(fsize):
+        ret[fftsize - i - 1] = ret[i+1]
+    
+    return np.exp(np.real(np.fft.rfft(ret)))
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def to_spectrum_from_matrix(np.ndarray[np.float64_t, ndim=2, mode="c"] mcepmat, double alpha, int fftsize):
+    cdef int fsize = fftsize >> 1
+    cdef np.ndarray[np.float64_t, ndim=2, mode="c"] c = np.zeros((mcepmat.shape[0], fsize + 1), dtype=np.float64)
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] prev = np.zeros(fsize + 1, dtype=np.float64)
+    cdef np.ndarray[np.float64_t, ndim=2, mode="c"] ret = np.zeros((mcepmat.shape[0], fftsize), dtype=np.float64)
+    cdef int i
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] c_vec, mcep_vec, ret_vec
+    for i in range(mcepmat.shape[0]):
+        c_vec = c[i]
+        mcep_vec = mcepmat[i]
+        ret_vec = ret[i]
+        freqt(<double *>mcep_vec.data, <double *>c_vec.data, <double *>prev.data, mcep_vec.size, -alpha, fftsize>>1)
+        c_vec[0] *= 2.0
+        np.copyto(ret_vec[:fsize + 1], c_vec)
+        for i in range(fsize):
+            ret_vec[fftsize - i - 1] = ret_vec[i+1]
+    return np.exp(np.real(np.fft.rfft(ret)))
 
 
 @cython.boundscheck(False)
@@ -65,10 +98,10 @@ cdef void freqt(const double *c, double *wc, double *prev, int c_size, double al
     for i in range(-(c_size - 1), 1):  # -(c_size - 1) 〜 0
         memcpy(prev, wc, sizeof(double)*(c_size + 1))
         if order >= 0:
-            wc[1] = c[-i+1] + alpha * prev[1]
+            wc[0] = c[-i] + alpha * prev[0]
         if order >= 1:
-            wc[2] = (1.0 - alpha ** 2) * prev[1] + alpha * prev[2]
-        for j in range(3, order+1):
+            wc[1] = (1.0 - alpha ** 2) * prev[0] + alpha * prev[1]
+        for j in range(2, order):  # 2 ~ order -> length(wc) -> order + 1
             wc[j] = prev[j - 1] + alpha * (prev[j] - wc[j - 1])
 
 
@@ -120,6 +153,7 @@ cdef void calc_warping_vector(double *vec, double alpha, int size) nogil:
         if warpfreq < 0:
             warpfreq += M_PI
         vec[i] = warpfreq
+
 
 cdef double rms_distance_like(double *a, double *b, int size) nogil:
     cdef int i
