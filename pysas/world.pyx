@@ -91,7 +91,7 @@ cdef class World:
         cdef np.ndarray[np.float64_t, ndim=2, mode="c"] spectrogram, aperiodicity
         spectrogram = np.zeros((f0.size, self.envelope_size), dtype=np.float64)
         aperiodicity = np.zeros((f0.size, self.envelope_size), dtype=np.float64)
-        
+
         cdef int i, j
         for i in range(f0.size):
             for j in range(self.envelope_size):
@@ -152,13 +152,14 @@ cdef class World:
 
         cdef int i, j
         # copy to c array
+        # ToDo: use typed memoryview
         for i in range(spectrogram.shape[0]):
             for j in range(spectrogram.shape[1]):
                 c_spectrogram[i][j] = spectrogram[i, j]
                 c_aperiodicity[i][j] = aperiodicity[i, j]
         
         synthesis.Synthesis(<double *>f0.data, f0.size, c_spectrogram, c_aperiodicity,
-                            self.fft_size, self.frameperiod, self.sampling_rate,
+                            self.fft_size, self.frameperiod, self.samplingrate,
                             result_length, <double *>result.data)
 
         free_matrix(c_spectrogram, spectrogram.shape[0])

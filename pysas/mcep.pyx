@@ -95,7 +95,7 @@ def to_spectrum_from_matrix(np.ndarray[np.float64_t, ndim=2, mode="c"] mcepmat, 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void freqt(const double *c, double *wc, double *prev, int c_size, double alpha, int order):
+cdef void freqt(const double *c, double *wc, double *prev, int c_size, double alpha, int order) nogil:
     cdef int i, j
     for i in range(-(c_size - 1), 1):  # -(c_size - 1) 〜 0
         memcpy(prev, wc, sizeof(double)*(order + 1))

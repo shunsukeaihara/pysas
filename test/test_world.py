@@ -19,3 +19,6 @@ class WorldTest(TestCase):
     def test_analyze(self):
         f0, spec, aperiod = self._callFUT(self.signal)
         eq_(f0.shape[0], spec.shape[0], aperiod.shape[0])
+        out = self.world.synthesis(f0, spec, aperiod)
+        assert len(out) == len(self.signal), "{}, {}".format(len(out), len(self.signal))
+        
