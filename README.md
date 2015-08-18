@@ -38,4 +38,4 @@ outsignal is 1d numpy.ndarray normalized between [-1,1].
 
 ## LICENSE
 
-Wrapper code is licensed under MIT License. Bundled World C++ library is licensed under New BSD license.
+Licensed under MIT License. Bundled World C++ library is licensed under New BSD license.
