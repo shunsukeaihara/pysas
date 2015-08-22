@@ -7,22 +7,26 @@ cimport cython
 from libc.stdlib cimport malloc, free
 from libc.math cimport log, exp
 
-cimport dio
-cimport d4c
-cimport stonemask
-cimport cheaptrick
-cimport matlabfunctions
-cimport synthesis
+from libworld cimport dio
+from libworld cimport d4c
+from libworld cimport stonemask
+from libworld cimport cheaptrick
+from libworld cimport matlabfunctions
+from libworld cimport synthesis
 
     
 cdef class World:
     """
+    cython Wrapper For World
     """
     cdef int samplingrate, fft_size, envelope_size
     cdef double frameperiod
     
     def __init__(self, int samplingrate, double frameperiod=5.0):
-
+        """
+        @param samplingrate sampling rate of signal(integaer)
+        @param frameperiod frame period(msec, default=5.0msec)
+        """
         self.frameperiod = frameperiod  # ms
         self.samplingrate = samplingrate
         self.fft_size = cheaptrick.GetFFTSizeForCheapTrick(self.samplingrate)

@@ -2,7 +2,7 @@
 # distutils: language = c++
 # distutils: sources = dio.cpp
 
-cdef extern from "../lib/world/dio.h" nogil:
+cdef extern from "../../lib/world/dio.h" nogil:
     cdef cppclass DioOption:
         double f0_floor
         double f0_ceil

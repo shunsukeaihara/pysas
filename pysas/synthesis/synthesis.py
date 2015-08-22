@@ -21,6 +21,8 @@ class Synthesis(object):
         for i in range(coef_mat.shape[0]):
             offset = self.frameperiod * i
             cur_coef = coef_mat[i]
-            ret[offset:offset+self.frameperiod] = self.synthesis_frame(cur_coef, prev_coef, pulse[offset:offset+self.frameperiod])
+            synthesized = self.synthesis_frame(cur_coef, prev_coef, pulse[offset:offset+self.frameperiod])
+            if i > 0:
+                ret[offset:offset+self.frameperiod] = synthesized
             prev_coef = cur_coef
         return ret

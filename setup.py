@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, Extension, find_packages
 from Cython.Distutils import build_ext
-#from Cython.Build import cythonize
 import sys
 import numpy as np
 from glob import glob
@@ -30,13 +29,13 @@ ext_modules = [Extension(
         language="c++",
     ),
     Extension(
-        'pysas.synthesis_filter.mlsa',
-        ["pysas/synthesis_filter/mlsa.pyx"],
+        'pysas.synthesis.mlsa',
+        ["pysas/synthesis/mlsa.pyx"],
         include_dirs=[np.get_include()],
         extra_compile_args=["-O3"],
         language="c++",
     )
-    ]
+]
     
 setup(
     name="pysas",
