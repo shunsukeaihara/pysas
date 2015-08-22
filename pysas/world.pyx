@@ -39,32 +39,16 @@ def waveread(path):
         signal = np.float64(np.fromstring(raw, dtype=np.int16)) / 32767.0
     return signal, fs, bits
 
-
-cdef double **malloc_matrix(int size, int dims) nogil:
-    cdef int i
-    cdef double **mat = <double **>malloc(size * sizeof(double *))
-    for i in range(size):
-        mat[i] = <double *>malloc(dims * sizeof(double))
-    return mat
-
-
-cdef void free_matrix(double **mat, int size) nogil:
-    cdef int i
-    for i in range(size):
-        free(mat[i])
-    free(mat)
-        
     
 cdef class World:
     """
     """
-
     cdef int samplingrate, fft_size, envelope_size
     cdef double frameperiod
     
-    def __init__(self, int samplingrate, double frameperiod=0.5):
+    def __init__(self, int samplingrate, double frameperiod=5.0):
 
-        self.frameperiod = frameperiod
+        self.frameperiod = frameperiod  # ms
         self.samplingrate = samplingrate
         self.fft_size = cheaptrick.GetFFTSizeForCheapTrick(self.samplingrate)
         self.envelope_size = self.fft_size / 2 + 1
@@ -81,26 +65,60 @@ cdef class World:
         """
         @return f0, spectrogram, aperiodicity
         """
+        cdef np.ndarray[np.float64_t, ndim=1, mode="c"] f0, time_axis
         f0, time_axis = self.estimate_f0(signal)
-        cdef double **c_spectrogram
-        cdef double **c_aperiodicity
         
-        c_spectrogram = self.estimate_spectral_envelope(signal, f0, time_axis)
-        c_aperiodicity = self.estimate_aperiodicity(signal, f0, time_axis)
-
         cdef np.ndarray[np.float64_t, ndim=2, mode="c"] spectrogram, aperiodicity
         spectrogram = np.zeros((f0.size, self.envelope_size), dtype=np.float64)
         aperiodicity = np.zeros((f0.size, self.envelope_size), dtype=np.float64)
 
-        cdef int i, j
+        cdef double **c_spectrogram = <double **>malloc(f0.size * sizeof(double *))
+        cdef double **c_aperiodicity = <double **>malloc(f0.size * sizeof(double *))
+
+        cdef int i
+        # copy pointer to c array
         for i in range(f0.size):
-            for j in range(self.envelope_size):
-                spectrogram[i, j] = c_spectrogram[i][j]
-                aperiodicity[i, j] = c_aperiodicity[i][j]
-        free_matrix(c_spectrogram, f0.size)
-        free_matrix(c_aperiodicity, f0.size)
+            c_spectrogram[i] = &(<double *>spectrogram.data)[i * spectrogram.shape[1]]
+            c_aperiodicity[i] = &(<double *>aperiodicity.data)[i * aperiodicity.shape[1]]
+
+        cheaptrick.CheapTrick(<double *>signal.data, signal.size, self.samplingrate,
+                              <double *>time_axis.data, <double *>f0.data,
+                              f0.size, c_spectrogram)
+
+        d4c.D4C(<double *>signal.data, signal.size, self.samplingrate,
+                <double *>time_axis.data, <double *>f0.data,
+                f0.size, self.fft_size, c_aperiodicity)
+
+        free(c_spectrogram)
+        free(c_aperiodicity)
         return f0, spectrogram, aperiodicity
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def spectral_envelope(self, np.ndarray[np.float64_t, ndim=1, mode="c"] signal):
+        """
+        @return f0, spectrogram
+        """
+        cdef np.ndarray[np.float64_t, ndim=1, mode="c"] f0, time_axis
+        f0, time_axis = self.estimate_f0(signal)
+        
+        cdef np.ndarray[np.float64_t, ndim=2, mode="c"] spectrogram
+        spectrogram = np.zeros((f0.size, self.envelope_size), dtype=np.float64)
+
+        cdef double **c_spectrogram = <double **>malloc(f0.size * sizeof(double *))
+
+        cdef int i
+        # copy pointer to c array
+        for i in range(f0.size):
+            c_spectrogram[i] = &(<double *>spectrogram.data)[i * spectrogram.shape[1]]
+
+        cheaptrick.CheapTrick(<double *>signal.data, signal.size, self.samplingrate,
+                              <double *>time_axis.data, <double *>f0.data,
+                              f0.size, c_spectrogram)
+
+        free(c_spectrogram)
+        return f0, spectrogram
+    
     def f0_scaling(self, np.ndarray[np.float64_t, ndim=1, mode="c"] f0, double shift):
         if shift <= 0:
             return f0
@@ -135,6 +153,10 @@ cdef class World:
             if (ratio < 1.0 and k > 0):
                 for j in range(k, dim):
                     spectrogram[i, j] = spectrogram[i, k - 1]
+        free(freq_axis1)
+        free(freq_axis2)
+        free(spectrum1)
+        free(spectrum2)
         return spectrogram
 
     def synthesis(self,
@@ -143,27 +165,25 @@ cdef class World:
                   np.ndarray[np.float64_t, ndim=2, mode="c"] aperiodicity):
         assert f0.size == spectrogram.shape[0] == aperiodicity.shape[0], "all arguments should be same sample size"
         assert spectrogram.shape[1] == aperiodicity.shape[1], "spectrogram and aperiodicity should be same size"
-        
-        cdef double **c_spectrogram = malloc_matrix(spectrogram.shape[0], spectrogram.shape[1])
-        cdef double **c_aperiodicity = malloc_matrix(aperiodicity.shape[0], aperiodicity.shape[1])
+                
+        cdef double **c_spectrogram = <double **>malloc(f0.size * sizeof(double *))
+        cdef double **c_aperiodicity = <double **>malloc(f0.size * sizeof(double *))
 
         cdef int result_length = <int>((f0.size - 1) * self.frameperiod / 1000.0 * self.samplingrate) + 1
         cdef np.ndarray[np.float64_t, ndim=1, mode="c"] result = np.zeros(result_length, dtype=np.float64)
 
-        cdef int i, j
+        cdef int i
         # copy to c array
-        # ToDo: use typed memoryview
         for i in range(spectrogram.shape[0]):
-            for j in range(spectrogram.shape[1]):
-                c_spectrogram[i][j] = spectrogram[i, j]
-                c_aperiodicity[i][j] = aperiodicity[i, j]
+            c_spectrogram[i] = &(<double *>spectrogram.data)[i * spectrogram.shape[1]]
+            c_aperiodicity[i] = &(<double *>aperiodicity.data)[i * aperiodicity.shape[1]]
         
         synthesis.Synthesis(<double *>f0.data, f0.size, c_spectrogram, c_aperiodicity,
                             self.fft_size, self.frameperiod, self.samplingrate,
                             result_length, <double *>result.data)
 
-        free_matrix(c_spectrogram, spectrogram.shape[0])
-        free_matrix(c_aperiodicity, aperiodicity.shape[0])
+        free(c_spectrogram)
+        free(c_aperiodicity)
         return result
     
     cdef estimate_f0(self, np.ndarray[np.float64_t, ndim=1, mode="c"] signal):
@@ -194,26 +214,3 @@ cdef class World:
                             f0_length, <double *> refined_f0.data)
         return refined_f0, time_axis
     
-    cdef double **estimate_spectral_envelope(self,
-            np.ndarray[np.float64_t, ndim=1, mode="c"] signal,
-            np.ndarray[np.float64_t, ndim=1, mode="c"] f0,
-            np.ndarray[np.float64_t, ndim=1, mode="c"] time_axis):
-        cdef double **spectrogram = malloc_matrix(f0.size, self.envelope_size)
-
-        # estimete spectral envelope
-        cheaptrick.CheapTrick(<double *> signal.data, signal.size, self.samplingrate,
-                              <double *> time_axis.data, <double *> f0.data,
-                              f0.size, spectrogram)
-        return spectrogram
-
-    cdef double **estimate_aperiodicity(self,
-            np.ndarray[np.float64_t, ndim=1, mode="c"] signal,
-            np.ndarray[np.float64_t, ndim=1, mode="c"] f0,
-            np.ndarray[np.float64_t, ndim=1, mode="c"] time_axis):
-        cdef double **aperiodicity = malloc_matrix(f0.size, self.envelope_size)
-
-        # estimete aperiodicity
-        d4c.D4C(<double *> signal.data, signal.size, self.samplingrate,
-                <double *> time_axis.data, <double *> f0.data,
-                f0.size, self.fft_size, aperiodicity)
-        return aperiodicity

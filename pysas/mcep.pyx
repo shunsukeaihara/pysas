@@ -14,7 +14,7 @@ from libc.float cimport DBL_MAX
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def to_mcep_from_matrix(np.ndarray[np.float64_t, ndim=1, mode="c"] spmat, int order, double alpha):
+def spec2mcep_from_matrix(np.ndarray[np.float64_t, ndim=2, mode="c"] spmat, int order, double alpha):
     """
     calucurate mel-cepstrum from spectrogram matrix
     """
@@ -32,15 +32,14 @@ def to_mcep_from_matrix(np.ndarray[np.float64_t, ndim=1, mode="c"] spmat, int or
         # ToDo: change ndarray to typed memoryview
         wc_vec = wc_mat[i]
         c_vec = c_mat[i]
-        c_vec[1] /= 2.0
+        c_vec[0] /= 2.0
         freqt(<double *>c_vec.data, <double *>wc_vec.data, <double *>prev.data, c_vec.size, alpha, order)
-        prev = 0
     return wc_mat
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def to_mcep(np.ndarray[np.float64_t, ndim=1, mode="c"] sp, int order, double alpha):
+def spec2mcep(np.ndarray[np.float64_t, ndim=1, mode="c"] sp, int order, double alpha):
     """
     calucurate mel-cepstrum from spectrogram vector
     """
@@ -56,7 +55,7 @@ def to_mcep(np.ndarray[np.float64_t, ndim=1, mode="c"] sp, int order, double alp
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def to_spectrum(np.ndarray[np.float64_t, ndim=1, mode="c"] mcep, double alpha, int fftsize):
+def mcep2spec(np.ndarray[np.float64_t, ndim=1, mode="c"] mcep, double alpha, int fftsize):
     cdef int fsize = fftsize >> 1
     cdef np.ndarray[np.float64_t, ndim=1, mode="c"] c = np.zeros(fsize + 1, dtype=np.float64)
     cdef np.ndarray[np.float64_t, ndim=1, mode="c"] prev = np.zeros_like(c)
@@ -73,7 +72,7 @@ def to_spectrum(np.ndarray[np.float64_t, ndim=1, mode="c"] mcep, double alpha, i
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def to_spectrum_from_matrix(np.ndarray[np.float64_t, ndim=2, mode="c"] mcepmat, double alpha, int fftsize):
+def mcep2spec_from_matrix(np.ndarray[np.float64_t, ndim=2, mode="c"] mcepmat, double alpha, int fftsize):
     cdef int fsize = fftsize >> 1
     cdef np.ndarray[np.float64_t, ndim=2, mode="c"] c = np.zeros((mcepmat.shape[0], fsize + 1), dtype=np.float64)
     cdef np.ndarray[np.float64_t, ndim=1, mode="c"] prev = np.zeros(fsize + 1, dtype=np.float64)
@@ -91,6 +90,29 @@ def to_spectrum_from_matrix(np.ndarray[np.float64_t, ndim=2, mode="c"] mcepmat, 
         for i in range(fsize):
             ret_vec[fftsize - i - 1] = ret_vec[i+1]
     return np.exp(np.real(np.fft.rfft(ret)))
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def mcep2coef(np.ndarray[np.float64_t, ndim=1, mode="c"] mcep, double alpha):
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] coef = mcep.copy()
+    cdef int i
+    for i from mcep.size - 2 >= i >= 0:
+        coef[i] = coef[i] - alpha * coef[i+1]
+    return coef
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def coef2mcep(np.ndarray[np.float64_t, ndim=1, mode="c"] coef, double alpha):
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] mcep = np.copy(coef)
+    cdef size = coef.size
+    cdef double d = mcep[size - 1]
+    cdef double o = 0
+    cdef int i
+    for i from size - 2 >= i >= 0:
+        o = mcep[i] + alpha * d
+        d = mcep[i]
+        mcep[i] = o
+    return mcep
 
 
 @cython.boundscheck(False)

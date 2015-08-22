@@ -21,7 +21,15 @@ ext_modules = [Extension(
         include_dirs=[np.get_include()],
         extra_compile_args=["-O3"],
         language="c++",
-    )]
+    ),
+    Extension(
+        'pysas.excite',
+        ["pysas/excite.pyx"],
+        include_dirs=[np.get_include()],
+        extra_compile_args=["-O3"],
+        language="c++",
+    )
+    ]
     
 setup(
     name="pysas",

@@ -1,2 +1,4 @@
 recursive-include lib *.cpp *.h *.txt
-recursive-include pyworld *.pyx *.pxd *.py
+recursive-include pysas *.pyx *.pxd *.py
+recursive-include test *.txt *.py *.wav
+prune pysas.egg-info
