@@ -28,6 +28,13 @@ ext_modules = [Extension(
         include_dirs=[np.get_include()],
         extra_compile_args=["-O3"],
         language="c++",
+    ),
+    Extension(
+        'pysas.synthesis_filter.mlsa',
+        ["pysas/synthesis_filter/mlsa.pyx"],
+        include_dirs=[np.get_include()],
+        extra_compile_args=["-O3"],
+        language="c++",
     )
     ]
     
