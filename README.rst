@@ -1,5 +1,5 @@
-(WIP)pysas
-==========
+pysas
+=====
 
 Speech Analysis and Synthesis Toolkit for Python(2.X, 3.X).
 
@@ -12,36 +12,7 @@ library by M. Morise.
 usage
 =====
 
-analyzing by world
-------------------
-
-.. code:: python
-
-    from pysas import World, waveread
-    signal, samplingrate, bitrate = waveread("path/to/monoral/wave/file")
-    world = World(samplingrate, bitrate)
-
-    f0, spectrogram, aperiodicity = world.analyze(signal)
-
-signal, f0 are 1d numpy.ndarray. spectrogram, aperiodicity are same
-shape 2d numpy.ndarray.
-
-F0 scaling and spectral stretching
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code:: python
-
-    f0 = world.f0_scaling(f0, 2.0)
-    spectrogram = world.spectral_stretching(spectrogram, 1.5)
-
-syntesis
-~~~~~~~~
-
-.. code:: python
-
-    outsignal = world.syntesis(f0, spectrogram, aperiodicity)
-
-outsignal is 1d numpy.ndarray normalized between [-1,1].
+-  http://nbviewer.ipython.org/github/shunsukeaihara/pysas/blob/master/sample.ipynb
 
 LICENSE
 -------
