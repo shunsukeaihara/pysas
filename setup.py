@@ -41,7 +41,7 @@ setup(
     name="pysas",
     description='Speech Analysis and Synthesis for Python',
     version="0.01",
-    long_description=open('README.md').read(),
+    long_description=open('README.rst').read(),
     packages=find_packages(),
     install_requires=["numpy","cython", 'nose'],
     ext_modules=ext_modules,
