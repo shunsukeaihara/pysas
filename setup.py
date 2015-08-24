@@ -47,8 +47,17 @@ setup(
     ext_modules=ext_modules,
     cmdclass={'build_ext': build_ext},
     author='Shunsuke Aihara',
+    author_email="aihara@argmax.jp",
     url='https://github.com/shunsukeaihara/pysas',
     license="MIT License",
     include_package_data=True,
     test_suite='nose.collector',
-    tests_require=['Nose', 'cython', 'numpy'])
+    tests_require=['Nose', 'cython', 'numpy'],
+    classifiers=[
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 2",
+        "Intended Audience :: Science/Research",
+        "Programming Language :: Python",
+        "Topic :: Scientific/Engineering"
+    ])
