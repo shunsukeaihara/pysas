@@ -2,6 +2,8 @@
 # distutils: language = c++
 # distutils: sources = mlsa.cpp
 
+# porting from https://gist.github.com/r9y9/7735120
+
 import numpy as np
 cimport numpy as np
 cimport cython
