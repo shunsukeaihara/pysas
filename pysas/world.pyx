@@ -42,7 +42,7 @@ cdef class World:
     @cython.wraparound(False)
     def analyze(self, np.ndarray[np.float64_t, ndim=1, mode="c"] signal):
         """
-        @return f0, spectrogram, aperiodicity
+        @return f0, spectral envelope, aperiodicity
         """
         cdef np.ndarray[np.float64_t, ndim=1, mode="c"] f0, time_axis
         f0, time_axis = self.estimate_f0(signal)
@@ -76,7 +76,9 @@ cdef class World:
     @cython.wraparound(False)
     def spectral_envelope(self, np.ndarray[np.float64_t, ndim=1, mode="c"] signal):
         """
-        @return f0, spectrogram
+        estimate F0 and spectral envelope from speech signal
+        @signal speech signal
+        @return f0, spectral envelope
         """
         cdef np.ndarray[np.float64_t, ndim=1, mode="c"] f0, time_axis
         f0, time_axis = self.estimate_f0(signal)
