@@ -40,7 +40,7 @@ ext_modules = [Extension(
 setup(
     name="pysas",
     description='Speech Analysis and Synthesis for Python',
-    version="0.01",
+    version="0.02",
     long_description=open('README.rst').read(),
     packages=find_packages(),
     install_requires=["numpy","cython", 'nose'],
