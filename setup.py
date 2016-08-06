@@ -34,6 +34,7 @@ class lazy_extlist(list):
 
 
 def extensions():
+    __builtins__.__NUMPY_SETUP__ = False
     import numpy as np
     ext_modules = [
         Extension(
@@ -71,11 +72,11 @@ def extensions():
 setup(
     name="pysas",
     description='Speech Analysis and Synthesis for Python',
-    version="0.3",
+    version="0.3.3",
     long_description=open('README.rst').read(),
     packages=find_packages(),
-    setup_requires=["numpy", "cython", 'nose'],
     install_requires=["numpy", "cython", 'nose'],
+    setup_requires=["numpy", "cython", 'nose'],
     ext_modules=lazy_extlist(extensions),
     cmdclass={'build_ext': build_ext},
     author='Shunsuke Aihara',
@@ -84,7 +85,7 @@ setup(
     license="MIT License",
     include_package_data=True,
     test_suite='nose.collector',
-    tests_require=['Nose', 'cython', 'numpy'],
+    tests_require=['nose', 'cython', 'numpy'],
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",

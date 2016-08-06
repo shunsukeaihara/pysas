@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # distutils: language = c++
-# distutils: sources = mlsa.cpp
+# distutils: sources = cysyntesis.cpp
 
 import numpy as np
 cimport numpy as np
