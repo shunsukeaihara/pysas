@@ -32,13 +32,14 @@ cdef class World:
         """
         self.frameperiod = frameperiod  # ms
         self.samplingrate = samplingrate
-        
+        dio.InitializeDioOption(&self.dioOption)
         self.dioOption.frame_period = self.frameperiod
         self.dioOption.speed = 1
         self.dioOption.f0_floor = 71.0
         self.dioOption.allowed_range = 0.1
-        dio.InitializeDioOption(&self.dioOption)
         cheaptrick.InitializeCheapTrickOption(self.samplingrate, &self.cheaptrickOption)
+        self.cheaptrickOption.q1 = -0.15
+        self.cheaptrickOption.f0_floor = 71.0
         d4c.InitializeD4COption(&self.d4cOption)
         self.fft_size = cheaptrick.GetFFTSizeForCheapTrick(self.samplingrate, &self.cheaptrickOption)
         self.envelope_size = self.fft_size // 2 + 1
