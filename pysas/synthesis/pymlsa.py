@@ -41,7 +41,7 @@ class CascadeFilter(object):
             self.pade_coefficients = padeCoef4
         else:
             self.pade_coefficients = padeCoef5
-            
+
     def filter(self, x, coefficients):
         result = 0.0
         feedback = 0.0
@@ -49,7 +49,7 @@ class CascadeFilter(object):
             i = -i
             self.delay[i] = self.filters[i].filter(self.delay[i - 1], coefficients)
             val = self.delay[i] * self.pade_coefficients[i]
-            if i%2 == 1:
+            if i % 2 == 1:
                 feedback += val
             else:
                 feedback -= val
@@ -57,6 +57,7 @@ class CascadeFilter(object):
         self.delay[0] = feedback + x
         result += self.delay[0]
         return result
+
 
 class MLSAFilter(object):
     def __init__(self, order, alpha, pade_order):
@@ -67,5 +68,4 @@ class MLSAFilter(object):
 
     def filter(self, x, coefficients):
         coef = np.array([0, coefficients[1]])
-        return self.f2.filter(self.f1.filter(x, coef),coefficients)
-        
+        return self.f2.filter(self.f1.filter(x, coef), coefficients)

@@ -77,7 +77,7 @@ cdef class CascadeFilter:
             i = -i
             self.delay[i] = (<Filter>self.filters[i]).filter(self.delay[i - 1], coefficients)
             val = self.delay[i] * self.pade_coefficients[i]
-            if i%2 == 1:
+            if i % 2 == 1:
                 feedback += val
             else:
                 feedback -= val
@@ -91,7 +91,7 @@ cdef class MLSAFilter(object):
     cdef double alpha
     cdef CascadeFilter f1
     cdef CascadeFilter f2
-    
+
     def __init__(self, int order, double alpha, int pade_order):
         assert pade_order == 4 or pade_order == 5, "order of pade must be 4 or 5."
         self.f1 = CascadeFilter(2, alpha, pade_order)
@@ -99,5 +99,4 @@ cdef class MLSAFilter(object):
 
     def filter(self, x, coefficients):
         coef = np.array([0, coefficients[1]])
-        return self.f2.filter(self.f1.filter(x, coef),coefficients)
-        
+        return self.f2.filter(self.f1.filter(x, coef), coefficients)
