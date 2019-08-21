@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-from  unittest import TestCase
+from unittest import TestCase
 from nose.tools import eq_
 import numpy as np
 
 from pysas import waveread
 from pysas.mcep import estimate_alpha, spec2mcep, mcep2spec, mcep2coef, coef2mcep
 from pysas.mcep import mcep2spec_from_matrix, spec2mcep_from_matrix
-from pysas.synthesis_filter.mlsa import MLSAFilter
 from pysas import World
 
 
@@ -18,7 +17,7 @@ class MecpTest(TestCase):
         start = 80*200
         self.windowsize = 1024
         signal = signal[start:start+self.windowsize] * np.blackman(self.windowsize)
-        self.pspec = np.absolute(np.fft.fft(signal) ** 2)[:(self.windowsize>>1) + 1]
+        self.pspec = np.absolute(np.fft.fft(signal) ** 2)[:(self.windowsize >> 1) + 1]
         self.alpha = 0.41
 
     def test_spec2mcep(self):
@@ -26,7 +25,7 @@ class MecpTest(TestCase):
         spec = mcep2spec(mcep, self.alpha, self.windowsize)
         sqerr = np.sqrt((np.log(self.pspec) - np.log(spec)) ** 2).sum() / self.pspec.size
         assert sqerr < 1.2, sqerr
-        
+
     def test_mcep2coef(self):
         mcep = spec2mcep(self.pspec, 20, self.alpha)
         coef = mcep2coef(mcep, self.alpha)
@@ -43,14 +42,17 @@ class MecpTest(TestCase):
         specmat = mcep2spec_from_matrix(mcepmat, self.alpha, self.windowsize)
         spec = mcep2spec(mcep, self.alpha, self.windowsize)
         assert (spec == specmat[300]).all()
-        
+
+
 class EstimateAlphaTest(TestCase):
     def _callFUT(self, sampfreq):
         return estimate_alpha(sampfreq)
+
     def test_8k(self):
         eq_(round(self._callFUT(8000), 3), 0.312)
+
     def test_16k(self):
         eq_(round(self._callFUT(16000), 3), 0.41)
+
     def test_44k(self):
         eq_(round(self._callFUT(44100), 3), 0.544)
-

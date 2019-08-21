@@ -1,0 +1,3 @@
+[submodule "world"]
+	path = world
+	url = git@github.com:mmorise/World.git

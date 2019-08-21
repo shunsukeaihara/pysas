@@ -21,6 +21,8 @@ cdef class World:
     """
     cdef int samplingrate, fft_size, envelope_size
     cdef double frameperiod
+    cdef cheaptrick.CheapTrickOption cheaptrickOption
+    cdef d4c.D4COption d4cOption
     
     def __init__(self, int samplingrate, double frameperiod=5.0):
         """
@@ -29,7 +31,9 @@ cdef class World:
         """
         self.frameperiod = frameperiod  # ms
         self.samplingrate = samplingrate
-        self.fft_size = cheaptrick.GetFFTSizeForCheapTrick(self.samplingrate)
+        cheaptrick.InitializeCheapTrickOption(self.samplingrate, &self.cheaptrickOption)
+        d4c.InitializeD4COption(&self.d4cOption)
+        self.fft_size = cheaptrick.GetFFTSizeForCheapTrick(self.samplingrate, &self.cheaptrickOption)
         self.envelope_size = self.fft_size / 2 + 1
 
     def fftsize(self):
@@ -62,11 +66,10 @@ cdef class World:
 
         cheaptrick.CheapTrick(<double *>signal.data, signal.size, self.samplingrate,
                               <double *>time_axis.data, <double *>f0.data,
-                              f0.size, c_spectrogram)
-
+                              f0.size, &self.cheaptrickOption, c_spectrogram)
         d4c.D4C(<double *>signal.data, signal.size, self.samplingrate,
                 <double *>time_axis.data, <double *>f0.data,
-                f0.size, self.fft_size, c_aperiodicity)
+                f0.size, self.fft_size, &self.d4cOption, c_aperiodicity)
 
         free(c_spectrogram)
         free(c_aperiodicity)
@@ -95,7 +98,7 @@ cdef class World:
 
         cheaptrick.CheapTrick(<double *>signal.data, signal.size, self.samplingrate,
                               <double *>time_axis.data, <double *>f0.data,
-                              f0.size, c_spectrogram)
+                              f0.size, &self.cheaptrickOption, c_spectrogram)
 
         free(c_spectrogram)
         return f0, spectrogram
@@ -189,7 +192,7 @@ cdef class World:
         option.allowed_range = 0.1
   
         dio.Dio(<double *> signal.data, signal.size, self.samplingrate,
-                option, <double *> time_axis.data, <double *> f0.data)
+                &option, <double *> time_axis.data, <double *> f0.data)
         stonemask.StoneMask(<double *> signal.data, signal.size, self.samplingrate,
                             <double *> time_axis.data, <double *> f0.data,
                             f0_length, <double *> refined_f0.data)
