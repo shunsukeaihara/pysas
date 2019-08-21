@@ -39,8 +39,8 @@ def extensions():
     ext_modules = [
         Extension(
             'pysas.world',
-            ["pysas/world.pyx"] + glob("world/src/*.cpp"),
-            include_dirs=['world/src', np.get_include()],
+            ["pysas/world.pyx"] + glob("lib/world/src/*.cpp"),
+            include_dirs=['lib/world/src', np.get_include()],
             extra_compile_args=["-O3"],
             language="c++",
         ),

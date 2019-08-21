@@ -2,7 +2,7 @@
 # distutils: language = c++
 # distutils: sources = cheaptrick.cpp
 
-cdef extern from "../world/src/world/cheaptrick.h" nogil:
+cdef extern from "../lib/world/src/world/cheaptrick.h" nogil:
     cdef cppclass CheapTrickOption:
         double q1
         double f0_floor

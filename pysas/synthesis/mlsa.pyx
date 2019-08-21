@@ -19,7 +19,7 @@ cdef class Filter:
     cdef double alpha
     cdef int order
     cdef double[:] delay
-    
+
     def __cinit__(self, int order, double alpha):
         self.order = order
         self.alpha = alpha
@@ -46,6 +46,7 @@ cdef class CascadeFilter:
     cdef double[:] delay
     cdef double[:] pade_coefficients
     cdef PyObject **filters
+
     def __cinit__(self, int order, double alpha, int pade_order):
         self.pade_order = pade_order
         self.filter_num = pade_order + 1

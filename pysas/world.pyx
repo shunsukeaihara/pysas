@@ -23,6 +23,7 @@ cdef class World:
     cdef double frameperiod
     cdef cheaptrick.CheapTrickOption cheaptrickOption
     cdef d4c.D4COption d4cOption
+    cdef dio.DioOption dioOption
     
     def __init__(self, int samplingrate, double frameperiod=5.0):
         """
@@ -31,10 +32,16 @@ cdef class World:
         """
         self.frameperiod = frameperiod  # ms
         self.samplingrate = samplingrate
+        
+        self.dioOption.frame_period = self.frameperiod
+        self.dioOption.speed = 1
+        self.dioOption.f0_floor = 71.0
+        self.dioOption.allowed_range = 0.1
+        dio.InitializeDioOption(&self.dioOption)
         cheaptrick.InitializeCheapTrickOption(self.samplingrate, &self.cheaptrickOption)
         d4c.InitializeD4COption(&self.d4cOption)
         self.fft_size = cheaptrick.GetFFTSizeForCheapTrick(self.samplingrate, &self.cheaptrickOption)
-        self.envelope_size = self.fft_size / 2 + 1
+        self.envelope_size = self.fft_size // 2 + 1
 
     def fftsize(self):
         return self.fft_size
@@ -55,14 +62,15 @@ cdef class World:
         spectrogram = np.zeros((f0.size, self.envelope_size), dtype=np.float64)
         aperiodicity = np.zeros((f0.size, self.envelope_size), dtype=np.float64)
 
+
         cdef double **c_spectrogram = <double **>malloc(f0.size * sizeof(double *))
         cdef double **c_aperiodicity = <double **>malloc(f0.size * sizeof(double *))
 
         cdef int i
         # copy pointer to c array
         for i in range(f0.size):
-            c_spectrogram[i] = &(<double *>spectrogram.data)[i * spectrogram.shape[1]]
-            c_aperiodicity[i] = &(<double *>aperiodicity.data)[i * aperiodicity.shape[1]]
+            c_spectrogram[i] = &spectrogram[i, 0]
+            c_aperiodicity[i] = &aperiodicity[i, 0]
 
         cheaptrick.CheapTrick(<double *>signal.data, signal.size, self.samplingrate,
                               <double *>time_axis.data, <double *>f0.data,
@@ -94,12 +102,11 @@ cdef class World:
         cdef int i
         # copy pointer to c array
         for i in range(f0.size):
-            c_spectrogram[i] = &(<double *>spectrogram.data)[i * spectrogram.shape[1]]
+            c_spectrogram[i] = &spectrogram[i, 0]
 
         cheaptrick.CheapTrick(<double *>signal.data, signal.size, self.samplingrate,
                               <double *>time_axis.data, <double *>f0.data,
                               f0.size, &self.cheaptrickOption, c_spectrogram)
-
         free(c_spectrogram)
         return f0, spectrogram
     
@@ -124,7 +131,7 @@ cdef class World:
         cdef int i, j, k
         k = <int>(self.fft_size / 2.0 * ratio)
         for i in range(dim):
-            freq_axis1[i] = ratio * i /self.fft_size * self.samplingrate
+            freq_axis1[i] = ratio * i / self.fft_size * self.samplingrate
             freq_axis2[i] = <double>i / self.fft_size * self.samplingrate
 
         for i in range(spectrogram.size):
@@ -159,9 +166,9 @@ cdef class World:
         cdef int i
         # copy to c array
         for i in range(spectrogram.shape[0]):
-            c_spectrogram[i] = &(<double *>spectrogram.data)[i * spectrogram.shape[1]]
-            c_aperiodicity[i] = &(<double *>aperiodicity.data)[i * aperiodicity.shape[1]]
-        
+            c_spectrogram[i] = &spectrogram[i, 0]
+            c_aperiodicity[i] = &aperiodicity[i, 0]
+
         synthesis.Synthesis(<double *>f0.data, f0.size, c_spectrogram, c_aperiodicity,
                             self.fft_size, self.frameperiod, self.samplingrate,
                             result_length, <double *>result.data)
@@ -181,18 +188,9 @@ cdef class World:
         f0 = np.zeros(f0_length, dtype=np.float64)
         refined_f0 = np.zeros(f0_length, dtype=np.float64)
         time_axis = np.zeros(f0_length, dtype=np.float64)
-
-        cdef dio.DioOption option
-        dio.InitializeDioOption(&option)
-        
-        # modify parameter
-        option.frame_period = self.frameperiod
-        option.speed = 1
-        option.f0_floor = 71.0
-        option.allowed_range = 0.1
   
         dio.Dio(<double *> signal.data, signal.size, self.samplingrate,
-                &option, <double *> time_axis.data, <double *> f0.data)
+                &self.dioOption, <double *> time_axis.data, <double *> f0.data)
         stonemask.StoneMask(<double *> signal.data, signal.size, self.samplingrate,
                             <double *> time_axis.data, <double *> f0.data,
                             f0_length, <double *> refined_f0.data)

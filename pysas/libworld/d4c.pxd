@@ -2,7 +2,7 @@
 # distutils: language = c++
 # distutils: sources = d4c.cpp
 
-cdef extern from "../../world/src/world/d4c.h" nogil:
+cdef extern from "../lib/world/src/world/d4c.h" nogil:
     cdef cppclass D4COption:
         double threshold
 
