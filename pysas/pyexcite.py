@@ -2,12 +2,12 @@
 import numpy as np
 try:
     from numba import jit
-except:
+except ImportError:
     from pysas.decorators import do_nothing as jit
+
 
 @jit
 def gen_frame(cur_f0, prev_f0, frame, samplingrate, gen_samples, gauss):
-    
     if cur_f0 == 0.0 or prev_f0 == 0.0:
         if gauss:
             return np.random.normal(0.0, 1.0, frame), gen_samples
@@ -26,6 +26,7 @@ def gen_frame(cur_f0, prev_f0, frame, samplingrate, gen_samples, gauss):
         gen_samples += 1
     return np.sqrt(ret), gen_samples
 
+
 @jit
 def gen_pulse(f0, frame, samplingrate, gauss):
     ret = np.zeros(f0.shape[0] * frame)
@@ -38,4 +39,3 @@ def gen_pulse(f0, frame, samplingrate, gauss):
         start = frame * i
         ret[start:start+frame] = pluses
     return ret
-    

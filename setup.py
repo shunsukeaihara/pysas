@@ -39,8 +39,8 @@ def extensions():
     ext_modules = [
         Extension(
             'pysas.world',
-            ["pysas/world.pyx"] + glob("lib/world/*.cpp"),
-            include_dirs=['lib/world', np.get_include()],
+            ["pysas/world.pyx"] + glob("lib/world/src/*.cpp"),
+            include_dirs=['lib/world/src', np.get_include()],
             extra_compile_args=["-O3"],
             language="c++",
         ),
@@ -72,7 +72,7 @@ def extensions():
 setup(
     name="pysas",
     description='Speech Analysis and Synthesis for Python',
-    version="0.3.3",
+    version="0.4",
     long_description=open('README.rst').read(),
     packages=find_packages(),
     install_requires=["numpy", "cython", 'nose'],
