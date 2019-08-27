@@ -72,7 +72,7 @@ def extensions():
 setup(
     name="pysas",
     description='Speech Analysis and Synthesis for Python',
-    version="0.4",
+    version="0.4.dev1",
     long_description=open('README.rst').read(),
     packages=find_packages(),
     install_requires=["numpy", "cython", 'nose'],
